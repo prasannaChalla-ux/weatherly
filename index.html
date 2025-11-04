@@ -1,0 +1,129 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weather App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+   
+
+   <div class="card">
+    <div class="search">
+      <input type="text" placeholder="Enter a location" spellcheck="false">
+      <button><img src="img.png" alt="search icon" /></button>
+      <ul id="suggessions" class="suggestions-list"></ul>
+
+    </div>
+
+    <div class="weather">
+      <img src="new.png" class="weather-icon">
+      <h1 class="temp">22°C</h1>
+      <h2 class="city">New York</h2>
+      <div class="feels-like">Feels like: 
+        <span id="feels"></span>°C</div>
+
+      <div class="details">
+        <div class="col">
+          <img src="humid.png" alt="humidity icon">
+          <div>
+            <p class="humidity">50%</p>
+            <p>Humidity</p>
+          </div>
+        </div>
+
+        <div class="col">
+          <img src="wind.png" alt="wind icon">
+          <div>
+            <p class="wind">15km/h</p>
+            <p>Windspeed</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  const apiKey = "74aa61769bab41be804151958252007";
+  const searchBox = document.querySelector(".search input");
+  const searchBtn = document.querySelector(".search button");
+  const weatherIcon = document.querySelector(".weather-icon");
+  const suggestionsList = document.getElementById("suggessions");
+
+  async function getSuggestions(query) {
+    const res = await fetch(`https://api.weatherapi.com/v1/search.json?key=${apiKey}&q=${query}`);
+    const data = await res.json();
+    showSuggestions(data);
+  }
+
+  function showSuggestions(locations) {
+    suggestionsList.innerHTML = "";
+    locations.forEach(loc => {
+      const li = document.createElement("li");
+      li.textContent = `${loc.name}, ${loc.region}`;
+      li.onclick = () => {
+        searchBox.value = loc.name;
+        suggestionsList.innerHTML = "";
+        checkWeather(loc.name);
+      };
+      suggestionsList.appendChild(li);
+    });
+  }
+
+  async function checkWeather(city) {
+    try {
+      const apiUrl = `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city}&aqi=no`;
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+
+      document.querySelector(".city").innerHTML = data.location.name;
+      document.querySelector(".temp").innerHTML = `${Math.round(data.current.temp_c)}°C`;
+      document.querySelector(".humidity").innerHTML = `${data.current.humidity}%`;
+      document.querySelector(".wind").innerHTML = `${data.current.wind_kph} km/h`;
+      document.querySelector(".feels-like").innerHTML = "Feels like: " + Math.round(data.current.feelslike_c) + "°C";
+
+
+      const condition = data.current.condition.text;
+
+      if (condition.includes("Cloud")) {
+        weatherIcon.src = "Clouds.png";
+      } else if (condition.includes("Clear")) {
+        weatherIcon.src = "new.png";
+      } else if (condition.includes("Rain")) {
+        weatherIcon.src = "newforrain.png";
+      } else if (condition.includes("Drizzle")) {
+        weatherIcon.src = "drizel.png";
+      } else if (condition.includes("Mist")) {
+        weatherIcon.src = "Mist.png";
+      } else {
+        weatherIcon.src = "new.png"; // default icon
+         }
+
+      document.querySelector(".weather").style.display = "block";
+    } catch (error) {
+      console.error("Error fetching weather data:", error);
+      alert("Location not found or network issue.");
+    }
+  }
+
+  searchBox.oninput = () => {
+    const value = searchBox.value.trim();
+    if (value) {
+      getSuggestions(value);
+    } else {
+      suggestionsList.innerHTML = "";
+    }
+  };
+
+  searchBtn.addEventListener("click", () => {
+    const city = searchBox.value.trim();
+    if (city) {
+      checkWeather(city);
+      suggestionsList.innerHTML = "";
+    }
+  });
+</script>
+</body>
+</html>
+
+
